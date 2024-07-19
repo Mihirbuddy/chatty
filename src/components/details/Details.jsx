@@ -61,7 +61,6 @@ const Detail = () => {
             <img src="./arrowDown.png" alt="" />
           </div>
           <div className="photos">
-          
             <div className="photoItem">
               <div className="photoDetail">
                 <img
