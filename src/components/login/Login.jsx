@@ -6,13 +6,14 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { auth, db } from "../../lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { collection, doc, getDocs, query, setDoc, where } from "firebase/firestore";
 import upload from "../../lib/upload";
 
 const Login = () => {
   const [avatar, setAvatar] = useState({
     file: null,
     url: "",
+    
   });
 
   const [loading, setLoading] = useState(false);
@@ -30,10 +31,12 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.target);
+    
 
     const { username, email, password } = Object.fromEntries(formData);
 
     // VALIDATE INPUTS
+    
     if (!username || !email || !password)
       return toast.warn("Please enter inputs!");
     if (!avatar.file) return toast.warn("Please upload an avatar!");
@@ -44,6 +47,7 @@ const Login = () => {
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       return toast.warn("Select another username");
+      
     }
 
     try {
