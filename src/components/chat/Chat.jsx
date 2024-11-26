@@ -15,7 +15,7 @@ import upload from "../../lib/upload";
 import { format } from "timeago.js";
 
 const Chat = () => {
-  const [chat, setChat] = useState();
+  const [chat, setChat] = useState({ messages: [] });
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [img, setImg] = useState({
@@ -30,17 +30,21 @@ const Chat = () => {
   const endRef = useRef(null);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chat?.messages) {
+      endRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [chat?.messages]);
 
   useEffect(() => {
-    const unSub = onSnapshot(doc(db, "chats", chatId), (res) => {
-      setChat(res.data());
-    });
+    if (chatId) {
+      const unSub = onSnapshot(doc(db, "chats", chatId), (res) => {
+        setChat(res.data() || { messages: [] });
+      });
 
-    return () => {
-      unSub();
-    };
+      return () => {
+        unSub();
+      };
+    }
   }, [chatId]);
 
   const handleEmoji = (e) => {
@@ -89,25 +93,27 @@ const Chat = () => {
             (c) => c.chatId === chatId
           );
 
-          userChatsData.chats[chatIndex].lastMessage = text;
-          userChatsData.chats[chatIndex].isSeen =
-            id === currentUser.id ? true : false;
-          userChatsData.chats[chatIndex].updatedAt = Date.now();
+          if (chatIndex >= 0) {
+            userChatsData.chats[chatIndex].lastMessage = text;
+            userChatsData.chats[chatIndex].isSeen =
+              id === currentUser.id ? true : false;
+            userChatsData.chats[chatIndex].updatedAt = Date.now();
 
-          await updateDoc(userChatsRef, {
-            chats: userChatsData.chats,
-          });
+            await updateDoc(userChatsRef, {
+              chats: userChatsData.chats,
+            });
+          }
         }
       });
     } catch (err) {
       console.log(err);
-    } finally{
-    setImg({
-      file: null,
-      url: "",
-    });
+    } finally {
+      setImg({
+        file: null,
+        url: "",
+      });
 
-    setText("");
+      setText("");
     }
   };
 
@@ -115,16 +121,16 @@ const Chat = () => {
     <div className="chat">
       <div className="top">
         <div className="user">
-          <img src={user?.avatar || "./avatar.png"} alt="" />
+          <img src="./emoji.png" alt="Avatar" />
           <div className="texts">
-            <span>{user?.username}</span>
+            <span>{user?.username || "Unknown User"}</span>
             <p>Lorem ipsum dolor, sit amet.</p>
           </div>
         </div>
         <div className="icons">
-          <img src="./phone.png" alt="" />
-          <img src="./video.png" alt="" />
-          <img src="./info.png" alt="" />
+          <img src="./phone.png" alt="Phone" />
+          <img src="./video.png" alt="Video" />
+          <img src="./info.png" alt="Info" />
         </div>
       </div>
       <div className="center">
@@ -133,19 +139,19 @@ const Chat = () => {
             className={
               message.senderId === currentUser?.id ? "message own" : "message"
             }
-            key={message?.createAt}
+            key={message?.createdAt?.toMillis?.() || Math.random()}
           >
             <div className="texts">
-              {message.img && <img src={message.img} alt="" />}
+              {message.img && <img src={message.img} alt="Message Attachment" />}
               <p>{message.text}</p>
-              <span>{format(message.createdAt.toDate())}</span>
+              <span>{message.createdAt && format(message.createdAt.toDate())}</span>
             </div>
           </div>
         ))}
         {img.url && (
           <div className="message own">
             <div className="texts">
-              <img src={img.url} alt="" />
+              <img src={img.url} alt="Preview" />
             </div>
           </div>
         )}
@@ -154,7 +160,7 @@ const Chat = () => {
       <div className="bottom">
         <div className="icons">
           <label htmlFor="file">
-            <img src="./img.png" alt="" />
+            <img src="./img.png" alt="Attach" />
           </label>
           <input
             type="file"
@@ -162,8 +168,8 @@ const Chat = () => {
             style={{ display: "none" }}
             onChange={handleImg}
           />
-          <img src="./camera.png" alt="" />
-          <img src="./mic.png" alt="" />
+          <img src="./camera.png" alt="Camera" />
+          <img src="./mic.png" alt="Mic" />
         </div>
         <input
           type="text"
@@ -179,12 +185,14 @@ const Chat = () => {
         <div className="emoji">
           <img
             src="./emoji.png"
-            alt=""
+            alt="Emoji"
             onClick={() => setOpen((prev) => !prev)}
           />
-          <div className="picker">
-            <EmojiPicker open={open} onEmojiClick={handleEmoji} />
-          </div>
+          {open && (
+            <div className="picker">
+              <EmojiPicker open={open} onEmojiClick={handleEmoji} />
+            </div>
+          )}
         </div>
         <button
           className="sendButton"

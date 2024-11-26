@@ -98,8 +98,8 @@ const ChatList = () => {
           <img
             src={
               chat.user.blocked.includes(currentUser.id)
-                ? "./avatar.png"
-                : chat.user.avatar || "./avatar.png"
+                ? "./emoji.png"
+                : "emoji.png" || "./emoji.png"
             }
             alt=""
           />
